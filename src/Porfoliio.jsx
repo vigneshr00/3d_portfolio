@@ -103,44 +103,56 @@ function ThreeBackground() {
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0);
         container.appendChild(renderer.domElement);
 
-        // Particles
+        // Particles with size variation
         const particlesGeo = new THREE.BufferGeometry();
-        const count = 1500;
+        const count = 2000;
         const positions = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
-        for (let i = 0; i < count * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 40;
-            positions[i + 1] = (Math.random() - 0.5) * 40;
-            positions[i + 2] = (Math.random() - 0.5) * 40;
-            const c = Math.random() > 0.5 ? new THREE.Color(ACCENT) : new THREE.Color(ACCENT2);
-            colors[i] = c.r; colors[i + 1] = c.g; colors[i + 2] = c.b;
+        const sizes = new Float32Array(count);
+        const palette = [new THREE.Color(ACCENT), new THREE.Color(ACCENT2), new THREE.Color("#ff2f7b"), new THREE.Color("#00ff7b")];
+        for (let i = 0; i < count; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 50;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+            const c = palette[Math.floor(Math.random() * palette.length)];
+            colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+            sizes[i] = Math.random() * 0.08 + 0.02;
         }
         particlesGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
         particlesGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-        const particlesMat = new THREE.PointsMaterial({ size: 0.04, vertexColors: true, transparent: true, opacity: 0.7 });
+        particlesGeo.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.05, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: true });
         const particles = new THREE.Points(particlesGeo, particlesMat);
         scene.add(particles);
 
-        // Wireframe shapes
-        const torusGeo = new THREE.TorusGeometry(3, 0.8, 16, 50);
-        const torusMat = new THREE.MeshBasicMaterial({ color: ACCENT, wireframe: true, transparent: true, opacity: 0.12 });
+        // Wireframe shapes with improved glow
+        const torusGeo = new THREE.TorusGeometry(3.5, 1, 20, 60);
+        const torusMat = new THREE.MeshBasicMaterial({ color: ACCENT, wireframe: true, transparent: true, opacity: 0.18 });
         const torus = new THREE.Mesh(torusGeo, torusMat);
-        torus.position.set(8, 2, -10);
+        torus.position.set(10, 3, -12);
         scene.add(torus);
 
-        const icoGeo = new THREE.IcosahedronGeometry(2, 1);
-        const icoMat = new THREE.MeshBasicMaterial({ color: ACCENT2, wireframe: true, transparent: true, opacity: 0.15 });
+        const icoGeo = new THREE.IcosahedronGeometry(2.5, 1);
+        const icoMat = new THREE.MeshBasicMaterial({ color: ACCENT2, wireframe: true, transparent: true, opacity: 0.2 });
         const ico = new THREE.Mesh(icoGeo, icoMat);
-        ico.position.set(-7, -3, -8);
+        ico.position.set(-9, -4, -10);
         scene.add(ico);
 
-        const octGeo = new THREE.OctahedronGeometry(1.5, 0);
-        const octMat = new THREE.MeshBasicMaterial({ color: "#ff2f7b", wireframe: true, transparent: true, opacity: 0.1 });
+        const octGeo = new THREE.OctahedronGeometry(2, 0);
+        const octMat = new THREE.MeshBasicMaterial({ color: "#ff2f7b", wireframe: true, transparent: true, opacity: 0.15 });
         const oct = new THREE.Mesh(octGeo, octMat);
-        oct.position.set(5, -5, -6);
+        oct.position.set(6, -6, -8);
         scene.add(oct);
+
+        // Extra shape - dodecahedron
+        const dodGeo = new THREE.DodecahedronGeometry(1.8, 0);
+        const dodMat = new THREE.MeshBasicMaterial({ color: "#00ff7b", wireframe: true, transparent: true, opacity: 0.12 });
+        const dod = new THREE.Mesh(dodGeo, dodMat);
+        dod.position.set(-5, 5, -9);
+        scene.add(dod);
 
         camera.position.z = 8;
         let mouseX = 0, mouseY = 0;
@@ -148,18 +160,27 @@ function ThreeBackground() {
         window.addEventListener("mousemove", onMouse);
 
         let frame;
+        let time = 0;
         const animate = () => {
             frame = requestAnimationFrame(animate);
-            particles.rotation.y += 0.0005;
+            time += 0.01;
+            particles.rotation.y += 0.0004;
             particles.rotation.x += 0.0002;
+            // Gentle floating motion for shapes
             torus.rotation.x += 0.003;
             torus.rotation.y += 0.005;
+            torus.position.y = 3 + Math.sin(time * 0.5) * 0.8;
             ico.rotation.x += 0.004;
             ico.rotation.z += 0.003;
+            ico.position.y = -4 + Math.sin(time * 0.7 + 1) * 0.6;
             oct.rotation.y += 0.006;
             oct.rotation.x += 0.002;
-            camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
-            camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
+            oct.position.y = -6 + Math.sin(time * 0.6 + 2) * 0.5;
+            dod.rotation.x += 0.003;
+            dod.rotation.z += 0.004;
+            dod.position.y = 5 + Math.sin(time * 0.4 + 3) * 0.7;
+            camera.position.x += (mouseX * 0.6 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY * 0.6 - camera.position.y) * 0.02;
             camera.lookAt(scene.position);
             renderer.render(scene, camera);
         };
@@ -228,16 +249,35 @@ export default function Portfolio() {
         setMobileMenu(false);
     };
 
-    const handleSubmit = useCallback(() => {
+    const [sending, setSending] = useState(false);
+
+    const handleSubmit = useCallback(async () => {
         if (!formData.name || !formData.email) { setFormStatus("Please fill in name and email."); return; }
-        const subject = encodeURIComponent(`Portfolio Inquiry from ${formData.name}`);
-        const body = encodeURIComponent(
-            `Name: ${formData.name}\nMobile: ${formData.mobile || "N/A"}\nEmail: ${formData.email}\n\nMessage:\n${formData.description || "No message provided."}`
-        );
-        window.open(`mailto:vignesh009612@gmail.com?subject=${subject}&body=${body}`, "_blank");
-        setFormStatus("Opening your email client... Thank you!");
-        setFormData({ name: "", mobile: "", email: "", description: "" });
-        setTimeout(() => setFormStatus(""), 4000);
+        setSending(true);
+        setFormStatus("");
+        try {
+            const res = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    mobile: formData.mobile || "N/A",
+                    message: formData.description || "No message provided.",
+                    _subject: `Portfolio Inquiry from ${formData.name}`,
+                }),
+            });
+            if (res.ok) {
+                setFormStatus("Message sent successfully! Thank you!");
+                setFormData({ name: "", mobile: "", email: "", description: "" });
+            } else {
+                setFormStatus("Something went wrong. Please try again.");
+            }
+        } catch {
+            setFormStatus("Network error. Please try again later.");
+        }
+        setSending(false);
+        setTimeout(() => setFormStatus(""), 5000);
     }, [formData]);
 
     const css = `
@@ -245,6 +285,7 @@ export default function Portfolio() {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body { background: ${BG}; color: ${TEXT}; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: ${BG}; }
     ::-webkit-scrollbar-thumb { background: ${ACCENT2}; border-radius: 3px; }
@@ -258,7 +299,7 @@ export default function Portfolio() {
   `;
 
     return (
-        <div style={{ background: BG, minHeight: "100vh", position: "relative" }}>
+        <div style={{ background: `linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 25%, #0a0a1a 50%, #1a0a2e 75%, #0a0a1a 100%)`, backgroundSize: "400% 400%", animation: "gradientShift 15s ease infinite", minHeight: "100vh", position: "relative" }}>
             <style>{css}</style>
             <ThreeBackground />
 
@@ -559,15 +600,16 @@ export default function Portfolio() {
                                 onBlur={e => e.target.style.borderColor = SURFACE2}
                             />
                         </div>
-                        <button onClick={handleSubmit} style={{
-                            width: "100%", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`,
-                            border: "none", color: BG, padding: "14px 0", borderRadius: 12, cursor: "pointer",
+                        <button onClick={handleSubmit} disabled={sending} style={{
+                            width: "100%", background: sending ? `${SURFACE2}` : `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`,
+                            border: "none", color: sending ? TEXT_DIM : BG, padding: "14px 0", borderRadius: 12,
+                            cursor: sending ? "not-allowed" : "pointer",
                             fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, letterSpacing: 0.5, transition: "all 0.3s",
                         }}>
-                            Send Message →
+                            {sending ? "Sending..." : "Send Message →"}
                         </button>
                         {formStatus && (
-                            <div style={{ marginTop: 12, fontSize: 13, fontFamily: "'JetBrains Mono'", color: formStatus.includes("Thank") ? "#00ff7b" : "#ff2f7b", textAlign: "center" }}>
+                            <div style={{ marginTop: 12, fontSize: 13, fontFamily: "'JetBrains Mono'", color: formStatus.includes("success") ? "#00ff7b" : "#ff2f7b", textAlign: "center" }}>
                                 {formStatus}
                             </div>
                         )}
