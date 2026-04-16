@@ -59,17 +59,17 @@ const EXPERIENCES = [
             "Built reusable component libraries reducing development time by 30%",
         ],
     },
-    {
-        role: "Freelance Full-Stack Developer",
-        company: "Self-Employed",
-        period: "2022 – Present",
-        points: [
-            "Delivered 5+ projects for clients across e-commerce, SaaS, and health-tech",
-            "Built end-to-end solutions from database design to pixel-perfect frontends",
-            "Specialized in rapid prototyping and MVP development for startups",
-            "Maintained long-term client relationships with 100% satisfaction rate",
-        ],
-    },
+    // {
+    //     role: "Freelance Full-Stack Developer",
+    //     company: "Self-Employed",
+    //     period: "2022 – Present",
+    //     points: [
+    //         "Delivered 5+ projects for clients across e-commerce, SaaS, and health-tech",
+    //         "Built end-to-end solutions from database design to pixel-perfect frontends",
+    //         "Specialized in rapid prototyping and MVP development for startups",
+    //         "Maintained long-term client relationships with 100% satisfaction rate",
+    //     ],
+    // },
 ];
 
 const SKILLS = {
@@ -255,11 +255,14 @@ function SkillRow({ category, items, color, delay }) {
     const ref = useRef(null);
     const [visible, setVisible] = useState(false);
     const [hovered, setHovered] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
     useEffect(() => {
         const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.2 });
         if (ref.current) obs.observe(ref.current);
-        return () => obs.disconnect();
+        const onResize = () => setIsMobile(window.innerWidth <= 600);
+        window.addEventListener("resize", onResize);
+        return () => { obs.disconnect(); window.removeEventListener("resize", onResize); };
     }, []);
 
     return (
@@ -272,13 +275,13 @@ function SkillRow({ category, items, color, delay }) {
                     opacity: visible ? undefined : 0,
                     cursor: "pointer",
                     display: "flex",
-                    alignItems: "center",
-                    gap: 20,
-                    flexWrap: "wrap",
+                    flexDirection: isMobile ? "column" : "row",
+                    alignItems: isMobile ? "flex-start" : "center",
+                    gap: isMobile ? 12 : 20,
                     background: hovered ? `${color}08` : `${SURFACE}cc`,
                     border: `1px solid ${hovered ? color + "44" : SURFACE2}`,
                     borderRadius: 16,
-                    padding: "18px 24px",
+                    padding: isMobile ? "16px 16px" : "18px 24px",
                     backdropFilter: "blur(10px)",
                     transition: "all 0.4s cubic-bezier(.22,1,.36,1)",
                     boxShadow: hovered ? `0 4px 24px ${color}15` : "none",
@@ -287,39 +290,39 @@ function SkillRow({ category, items, color, delay }) {
                 {/* Category label */}
                 <div style={{
                     fontFamily: "'JetBrains Mono'",
-                    fontSize: 14,
+                    fontSize: isMobile ? 13 : 14,
                     fontWeight: 700,
                     color: color,
                     letterSpacing: 1,
-                    minWidth: 160,
                     flexShrink: 0,
-                    borderRight: `2px solid ${color}33`,
-                    paddingRight: 20,
+                    borderRight: isMobile ? "none" : `2px solid ${color}33`,
+                    borderBottom: isMobile ? `2px solid ${color}33` : "none",
+                    paddingRight: isMobile ? 0 : 20,
+                    paddingBottom: isMobile ? 8 : 0,
+                    width: isMobile ? "100%" : "auto",
+                    minWidth: isMobile ? "auto" : 160,
                 }}>{category}</div>
 
                 {/* Tech items in a row */}
                 <div style={{
                     display: "flex",
                     flexWrap: "wrap",
-                    gap: 8,
+                    gap: isMobile ? 6 : 8,
                     flex: 1,
-                    overflow: "hidden",
-                    maxHeight: hovered ? 200 : 200,
-                    transition: "all 0.4s",
+                    width: isMobile ? "100%" : "auto",
                 }}>
                     {items.map((s, i) => (
                         <span key={s} style={{
                             fontFamily: "'JetBrains Mono'",
-                            fontSize: 12,
+                            fontSize: isMobile ? 11 : 12,
                             color: hovered ? TEXT : TEXT_DIM,
                             background: hovered ? `${color}15` : SURFACE2,
-                            padding: "6px 14px",
+                            padding: isMobile ? "5px 10px" : "6px 14px",
                             borderRadius: 20,
                             border: `1px solid ${hovered ? color + "33" : color + "11"}`,
                             whiteSpace: "nowrap",
                             transition: "all 0.3s ease",
                             transitionDelay: hovered ? `${i * 0.03}s` : "0s",
-                            transform: hovered ? "translateY(0)" : "translateY(0)",
                         }}>{s}</span>
                     ))}
                 </div>
@@ -334,7 +337,7 @@ export default function Portfolio() {
     const [formStatus, setFormStatus] = useState("");
     const [mobileMenu, setMobileMenu] = useState(false);
 
-    const navItems = ["home", "about", "experience", "projects", "skills", "contact"];
+    const navItems = ["home", "about", "experience", "skills", "contact"];
 
     useEffect(() => {
         const handleScroll = () => {
@@ -483,14 +486,14 @@ export default function Portfolio() {
                                 fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
                                 transition: "all 0.3s", animation: "glow 3s infinite",
                             }}>Let's Connect</button>
-                            <button onClick={() => scrollTo("projects")} style={{
+                            {/* <button onClick={() => scrollTo("projects")} style={{
                                 background: "transparent", border: `1px solid ${ACCENT}55`, color: ACCENT,
                                 padding: "14px 32px", borderRadius: 30, cursor: "pointer",
                                 fontFamily: "'Outfit'", fontSize: 15, fontWeight: 600, transition: "all 0.3s",
-                            }}>View Projects</button>
+                            }}>View Projects</button> */}
                         </div>
                         <div style={{ display: "flex", gap: 40, marginTop: 56, flexWrap: "wrap" }}>
-                            {[["3+", "Years Exp."], ["5+", "Freelance Projects"], ["95%+", "Code Review Rate"]].map(([n, l]) => (
+                            {[["3+", "Years Exp."], ["95%+", "Code Review Rate"]].map(([n, l]) => (
                                 <div key={l}>
                                     <div style={{ fontSize: 32, fontWeight: 800 }}><GlowText>{n}</GlowText></div>
                                     <div style={{ fontSize: 13, color: TEXT_DIM, marginTop: 4 }}>{l}</div>
@@ -521,13 +524,13 @@ export default function Portfolio() {
                                 I believe great software is built when you're in flow state. I leverage AI tools, modern workflows, and intuitive coding practices to ship faster without sacrificing quality. Clean code isn't just a practice — it's a vibe.
                             </p>
                         </div>
-                        <div style={{ background: `${SURFACE}cc`, border: `1px solid ${SURFACE2}`, borderRadius: 16, padding: 28, backdropFilter: "blur(10px)" }}>
+                        {/* <div style={{ background: `${SURFACE}cc`, border: `1px solid ${SURFACE2}`, borderRadius: 16, padding: 28, backdropFilter: "blur(10px)" }}>
                             <div style={{ fontSize: 28, marginBottom: 12 }}>🚀</div>
                             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Freelance & Beyond</h3>
                             <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7 }}>
                                 Beyond my full-time roles, I've delivered 5+ freelance projects for clients worldwide — from MVPs for startups to production apps for established businesses. I thrive on turning ideas into shipped products.
                             </p>
-                        </div>
+                        </div> */}
                     </div>
                 </Section>
 
@@ -590,7 +593,7 @@ export default function Portfolio() {
                     </div>
                 </Section>
 
-                {/* PROJECTS */}
+                {/* PROJECTS — commented out for now
                 <Section id="projects">
                     <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 12, color: ACCENT, letterSpacing: 3, marginBottom: 8 }}>03 // PROJECTS</div>
                     <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, marginBottom: 40 }}>
@@ -625,6 +628,7 @@ export default function Portfolio() {
                         ))}
                     </div>
                 </Section>
+                */}
 
                 {/* SKILLS */}
                 <Section id="skills">
