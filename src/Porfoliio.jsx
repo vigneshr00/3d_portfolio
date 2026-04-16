@@ -34,18 +34,6 @@ const PROJECTS = [
         tech: ["React", "GraphQL", "Node.js", "PostgreSQL"],
         color: "#f0ff00",
     },
-    {
-        title: "InvoiceGen – Freelance Invoice System",
-        desc: "Automated invoicing system built for freelancers with PDF generation, payment tracking, client management, and recurring billing support.",
-        tech: ["Next.js", "Express.js", "MySQL", "PDFKit"],
-        color: "#00ff7b",
-    },
-    {
-        title: "ChatBot AI – Customer Support Bot",
-        desc: "AI-powered customer support chatbot with natural language processing, escalation workflows, and analytics dashboard for businesses.",
-        tech: ["React", "Node.js", "OpenAI API", "Redis", "WebSocket"],
-        color: "#ff7b2f",
-    },
 ];
 
 const EXPERIENCES = [
@@ -76,7 +64,7 @@ const EXPERIENCES = [
         company: "Self-Employed",
         period: "2022 – Present",
         points: [
-            "Delivered 15+ projects for clients across e-commerce, SaaS, and health-tech",
+            "Delivered 5+ projects for clients across e-commerce, SaaS, and health-tech",
             "Built end-to-end solutions from database design to pixel-perfect frontends",
             "Specialized in rapid prototyping and MVP development for startups",
             "Maintained long-term client relationships with 100% satisfaction rate",
@@ -87,11 +75,20 @@ const EXPERIENCES = [
 const SKILLS = {
     Frontend: ["React", "Next.js", "React Native", "Redux", "JavaScript ES6+", "HTML5", "CSS3", "SCSS", "Tailwind"],
     Backend: ["Node.js", "Express.js", "REST APIs", "JWT Auth", "Middleware", "WebSocket", "GraphQL"],
-    Database: ["PostgreSQL", "MySQL", "MongoDB", "Redis", "Query Optimization"],
-    "DevOps & Tools": ["Git", "Azure", "Docker", "CI/CD", "Agile/Scrum", "Vibe Coding"],
+    Database: ["PostgreSQL", "MySQL", "MongoDB", "Redis"],
+    "DevOps & Tools": ["Git", "Azure", "Docker", "CI/CD", "Agile/Scrum"],
+    "AI & Vibe Coding": ["Claude AI", "Prompt Engineering", "AI-Assisted Development"],
 };
 
-// 3D Background Component
+const SKILL_COLORS = {
+    Frontend: "#00f0ff",
+    Backend: "#7b2fff",
+    Database: "#ff2f7b",
+    "DevOps & Tools": "#f0ff00",
+    "AI & Vibe Coding": "#00ff7b",
+};
+
+// 3D Dark Cube Background — rotates on scroll
 function ThreeBackground() {
     const mountRef = useRef(null);
 
@@ -99,89 +96,117 @@ function ThreeBackground() {
         if (!mountRef.current) return;
         const container = mountRef.current;
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 0);
         container.appendChild(renderer.domElement);
 
-        // Particles with size variation
-        const particlesGeo = new THREE.BufferGeometry();
-        const count = 2000;
-        const positions = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
-        const sizes = new Float32Array(count);
-        const palette = [new THREE.Color(ACCENT), new THREE.Color(ACCENT2), new THREE.Color("#ff2f7b"), new THREE.Color("#00ff7b")];
-        for (let i = 0; i < count; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 50;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
-            const c = palette[Math.floor(Math.random() * palette.length)];
-            colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-            sizes[i] = Math.random() * 0.08 + 0.02;
+        // Main dark cube — wireframe with glowing edges
+        const cubeSize = 5;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        const cubeEdges = new THREE.EdgesGeometry(cubeGeo);
+        const cubeMat = new THREE.LineBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.35 });
+        const cube = new THREE.LineSegments(cubeEdges, cubeMat);
+        scene.add(cube);
+
+        // Inner cube — smaller, different color, rotates opposite
+        const innerGeo = new THREE.BoxGeometry(cubeSize * 0.55, cubeSize * 0.55, cubeSize * 0.55);
+        const innerEdges = new THREE.EdgesGeometry(innerGeo);
+        const innerMat = new THREE.LineBasicMaterial({ color: ACCENT2, transparent: true, opacity: 0.25 });
+        const innerCube = new THREE.LineSegments(innerEdges, innerMat);
+        scene.add(innerCube);
+
+        // Outer cube — larger, faint
+        const outerGeo = new THREE.BoxGeometry(cubeSize * 1.6, cubeSize * 1.6, cubeSize * 1.6);
+        const outerEdges = new THREE.EdgesGeometry(outerGeo);
+        const outerMat = new THREE.LineBasicMaterial({ color: "#ff2f7b", transparent: true, opacity: 0.1 });
+        const outerCube = new THREE.LineSegments(outerEdges, outerMat);
+        scene.add(outerCube);
+
+        // Corner particles — dots at cube vertices
+        const dotGeo = new THREE.BufferGeometry();
+        const dotPositions = [];
+        const half = cubeSize / 2;
+        for (let x = -1; x <= 1; x += 2)
+            for (let y = -1; y <= 1; y += 2)
+                for (let z = -1; z <= 1; z += 2)
+                    dotPositions.push(x * half, y * half, z * half);
+        dotGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotPositions, 3));
+        const dotMat = new THREE.PointsMaterial({ color: ACCENT, size: 0.12, transparent: true, opacity: 0.8 });
+        const dots = new THREE.Points(dotGeo, dotMat);
+        scene.add(dots);
+
+        // Floating dust particles
+        const dustGeo = new THREE.BufferGeometry();
+        const dustCount = 300;
+        const dustPos = new Float32Array(dustCount * 3);
+        for (let i = 0; i < dustCount * 3; i += 3) {
+            dustPos[i] = (Math.random() - 0.5) * 30;
+            dustPos[i + 1] = (Math.random() - 0.5) * 30;
+            dustPos[i + 2] = (Math.random() - 0.5) * 30;
         }
-        particlesGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        particlesGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-        particlesGeo.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
-        const particlesMat = new THREE.PointsMaterial({ size: 0.05, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: true });
-        const particles = new THREE.Points(particlesGeo, particlesMat);
-        scene.add(particles);
+        dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(dustPos, 3));
+        const dustMat = new THREE.PointsMaterial({ color: 0x667799, size: 0.02, transparent: true, opacity: 0.4 });
+        const dust = new THREE.Points(dustGeo, dustMat);
+        scene.add(dust);
 
-        // Wireframe shapes with improved glow
-        const torusGeo = new THREE.TorusGeometry(3.5, 1, 20, 60);
-        const torusMat = new THREE.MeshBasicMaterial({ color: ACCENT, wireframe: true, transparent: true, opacity: 0.18 });
-        const torus = new THREE.Mesh(torusGeo, torusMat);
-        torus.position.set(10, 3, -12);
-        scene.add(torus);
+        camera.position.z = 12;
 
-        const icoGeo = new THREE.IcosahedronGeometry(2.5, 1);
-        const icoMat = new THREE.MeshBasicMaterial({ color: ACCENT2, wireframe: true, transparent: true, opacity: 0.2 });
-        const ico = new THREE.Mesh(icoGeo, icoMat);
-        ico.position.set(-9, -4, -10);
-        scene.add(ico);
+        // Scroll tracking
+        let scrollY = 0;
+        let targetScrollY = 0;
+        const onScroll = () => {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            targetScrollY = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
 
-        const octGeo = new THREE.OctahedronGeometry(2, 0);
-        const octMat = new THREE.MeshBasicMaterial({ color: "#ff2f7b", wireframe: true, transparent: true, opacity: 0.15 });
-        const oct = new THREE.Mesh(octGeo, octMat);
-        oct.position.set(6, -6, -8);
-        scene.add(oct);
-
-        // Extra shape - dodecahedron
-        const dodGeo = new THREE.DodecahedronGeometry(1.8, 0);
-        const dodMat = new THREE.MeshBasicMaterial({ color: "#00ff7b", wireframe: true, transparent: true, opacity: 0.12 });
-        const dod = new THREE.Mesh(dodGeo, dodMat);
-        dod.position.set(-5, 5, -9);
-        scene.add(dod);
-
-        camera.position.z = 8;
+        // Mouse tracking
         let mouseX = 0, mouseY = 0;
-        const onMouse = (e) => { mouseX = (e.clientX / window.innerWidth - 0.5) * 2; mouseY = (e.clientY / window.innerHeight - 0.5) * 2; };
+        const onMouse = (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        };
         window.addEventListener("mousemove", onMouse);
 
         let frame;
         let time = 0;
         const animate = () => {
             frame = requestAnimationFrame(animate);
-            time += 0.01;
-            particles.rotation.y += 0.0004;
-            particles.rotation.x += 0.0002;
-            // Gentle floating motion for shapes
-            torus.rotation.x += 0.003;
-            torus.rotation.y += 0.005;
-            torus.position.y = 3 + Math.sin(time * 0.5) * 0.8;
-            ico.rotation.x += 0.004;
-            ico.rotation.z += 0.003;
-            ico.position.y = -4 + Math.sin(time * 0.7 + 1) * 0.6;
-            oct.rotation.y += 0.006;
-            oct.rotation.x += 0.002;
-            oct.position.y = -6 + Math.sin(time * 0.6 + 2) * 0.5;
-            dod.rotation.x += 0.003;
-            dod.rotation.z += 0.004;
-            dod.position.y = 5 + Math.sin(time * 0.4 + 3) * 0.7;
-            camera.position.x += (mouseX * 0.6 - camera.position.x) * 0.02;
+            time += 0.008;
+
+            // Smooth scroll interpolation
+            scrollY += (targetScrollY - scrollY) * 0.05;
+
+            // Cube rotates based on scroll (full rotation over page scroll)
+            const scrollAngle = scrollY * Math.PI * 4;
+            cube.rotation.x = scrollAngle * 0.6 + time * 0.1;
+            cube.rotation.y = scrollAngle + time * 0.15;
+            cube.rotation.z = scrollAngle * 0.3;
+
+            // Inner cube — opposite & faster
+            innerCube.rotation.x = -scrollAngle * 0.8 + time * 0.2;
+            innerCube.rotation.y = -scrollAngle * 1.2 + time * 0.1;
+            innerCube.rotation.z = scrollAngle * 0.5;
+
+            // Outer cube — slow, subtle
+            outerCube.rotation.x = scrollAngle * 0.2 + time * 0.03;
+            outerCube.rotation.y = scrollAngle * 0.3 + time * 0.05;
+
+            // Corner dots follow main cube
+            dots.rotation.copy(cube.rotation);
+
+            // Dust drift
+            dust.rotation.y += 0.0002;
+            dust.rotation.x += 0.0001;
+
+            // Mouse parallax on camera
+            camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.02;
             camera.position.y += (-mouseY * 0.6 - camera.position.y) * 0.02;
             camera.lookAt(scene.position);
+
             renderer.render(scene, camera);
         };
         animate();
@@ -195,6 +220,7 @@ function ThreeBackground() {
 
         return () => {
             cancelAnimationFrame(frame);
+            window.removeEventListener("scroll", onScroll);
             window.removeEventListener("mousemove", onMouse);
             window.removeEventListener("resize", onResize);
             if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
@@ -223,6 +249,83 @@ function Section({ children, id }) {
 
 function GlowText({ children, style }) {
     return <span style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", ...style }}>{children}</span>;
+}
+
+function SkillRow({ category, items, color, delay }) {
+    const ref = useRef(null);
+    const [visible, setVisible] = useState(false);
+    const [hovered, setHovered] = useState(false);
+
+    useEffect(() => {
+        const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.2 });
+        if (ref.current) obs.observe(ref.current);
+        return () => obs.disconnect();
+    }, []);
+
+    return (
+        <div ref={ref} style={{ perspective: 800, width: "100%" }}>
+            <div
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                style={{
+                    animation: visible ? `flipIn 0.7s cubic-bezier(.22,1,.36,1) ${delay}s both` : "none",
+                    opacity: visible ? undefined : 0,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 20,
+                    flexWrap: "wrap",
+                    background: hovered ? `${color}08` : `${SURFACE}cc`,
+                    border: `1px solid ${hovered ? color + "44" : SURFACE2}`,
+                    borderRadius: 16,
+                    padding: "18px 24px",
+                    backdropFilter: "blur(10px)",
+                    transition: "all 0.4s cubic-bezier(.22,1,.36,1)",
+                    boxShadow: hovered ? `0 4px 24px ${color}15` : "none",
+                }}
+            >
+                {/* Category label */}
+                <div style={{
+                    fontFamily: "'JetBrains Mono'",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: color,
+                    letterSpacing: 1,
+                    minWidth: 160,
+                    flexShrink: 0,
+                    borderRight: `2px solid ${color}33`,
+                    paddingRight: 20,
+                }}>{category}</div>
+
+                {/* Tech items in a row */}
+                <div style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    flex: 1,
+                    overflow: "hidden",
+                    maxHeight: hovered ? 200 : 200,
+                    transition: "all 0.4s",
+                }}>
+                    {items.map((s, i) => (
+                        <span key={s} style={{
+                            fontFamily: "'JetBrains Mono'",
+                            fontSize: 12,
+                            color: hovered ? TEXT : TEXT_DIM,
+                            background: hovered ? `${color}15` : SURFACE2,
+                            padding: "6px 14px",
+                            borderRadius: 20,
+                            border: `1px solid ${hovered ? color + "33" : color + "11"}`,
+                            whiteSpace: "nowrap",
+                            transition: "all 0.3s ease",
+                            transitionDelay: hovered ? `${i * 0.03}s` : "0s",
+                            transform: hovered ? "translateY(0)" : "translateY(0)",
+                        }}>{s}</span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function Portfolio() {
@@ -256,7 +359,7 @@ export default function Portfolio() {
         setSending(true);
         setFormStatus("");
         try {
-            const res = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
+            const res = await fetch("https://formspree.io/f/mzdyedev", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify({
@@ -284,8 +387,7 @@ export default function Portfolio() {
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { background: ${BG}; color: ${TEXT}; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
-    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    body { background: #050510; color: ${TEXT}; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: ${BG}; }
     ::-webkit-scrollbar-thumb { background: ${ACCENT2}; border-radius: 3px; }
@@ -296,18 +398,26 @@ export default function Portfolio() {
     @keyframes typing { from { width: 0; } to { width: 100%; } }
     @keyframes blink { 50% { border-color: transparent; } }
     @keyframes glow { 0%,100% { box-shadow: 0 0 20px ${ACCENT}33; } 50% { box-shadow: 0 0 40px ${ACCENT}55; } }
+    @keyframes flipIn { from { transform: rotateX(90deg); opacity: 0; } to { transform: rotateX(0deg); opacity: 1; } }
   `;
 
     return (
-        <div style={{ background: `linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 25%, #0a0a1a 50%, #1a0a2e 75%, #0a0a1a 100%)`, backgroundSize: "400% 400%", animation: "gradientShift 15s ease infinite", minHeight: "100vh", position: "relative" }}>
+        <div style={{ background: `radial-gradient(ellipse at 50% 0%, #0d1a2d 0%, #050510 60%)`, minHeight: "100vh", position: "relative" }}>
             <style>{css}</style>
             <ThreeBackground />
 
             {/* NAV */}
             <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: `${BG}dd`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${SURFACE2}` }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
-                    <div style={{ fontFamily: "'JetBrains Mono'", fontWeight: 700, fontSize: 22, cursor: "pointer" }} onClick={() => scrollTo("home")}>
-                        <GlowText>{"<VR />"}</GlowText>
+                    <div onClick={() => scrollTo("home")} style={{
+                        width: 40, height: 40, borderRadius: 12, cursor: "pointer",
+                        background: `linear-gradient(135deg, ${ACCENT}22, ${ACCENT2}22)`,
+                        border: `2px solid ${ACCENT}66`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontFamily: "'JetBrains Mono'", fontWeight: 900, fontSize: 22,
+                        transition: "all 0.3s",
+                    }}>
+                        <GlowText>{"VR"}</GlowText>
                     </div>
                     {/* Desktop nav */}
                     <div style={{ display: "flex", gap: 8 }} className="desktop-nav">
@@ -380,7 +490,7 @@ export default function Portfolio() {
                             }}>View Projects</button>
                         </div>
                         <div style={{ display: "flex", gap: 40, marginTop: 56, flexWrap: "wrap" }}>
-                            {[["3+", "Years Exp."], ["15+", "Freelance Projects"], ["95%+", "Code Review Rate"]].map(([n, l]) => (
+                            {[["3+", "Years Exp."], ["5+", "Freelance Projects"], ["95%+", "Code Review Rate"]].map(([n, l]) => (
                                 <div key={l}>
                                     <div style={{ fontSize: 32, fontWeight: 800 }}><GlowText>{n}</GlowText></div>
                                     <div style={{ fontSize: 13, color: TEXT_DIM, marginTop: 4 }}>{l}</div>
@@ -415,7 +525,7 @@ export default function Portfolio() {
                             <div style={{ fontSize: 28, marginBottom: 12 }}>🚀</div>
                             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Freelance & Beyond</h3>
                             <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7 }}>
-                                Beyond my full-time roles, I've delivered 15+ freelance projects for clients worldwide — from MVPs for startups to production apps for established businesses. I thrive on turning ideas into shipped products.
+                                Beyond my full-time roles, I've delivered 5+ freelance projects for clients worldwide — from MVPs for startups to production apps for established businesses. I thrive on turning ideas into shipped products.
                             </p>
                         </div>
                     </div>
@@ -519,28 +629,14 @@ export default function Portfolio() {
                 {/* SKILLS */}
                 <Section id="skills">
                     <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 12, color: ACCENT, letterSpacing: 3, marginBottom: 8 }}>04 // SKILLS</div>
-                    <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, marginBottom: 40 }}>
+                    <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, marginBottom: 16 }}>
                         My <GlowText>Arsenal</GlowText>
                     </h2>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
-                        {Object.entries(SKILLS).map(([cat, items], ci) => {
-                            const colors = [ACCENT, ACCENT2, "#ff2f7b", "#f0ff00"];
-                            const c = colors[ci % colors.length];
-                            return (
-                                <div key={cat} style={{ background: `${SURFACE}cc`, border: `1px solid ${SURFACE2}`, borderRadius: 16, padding: 24, backdropFilter: "blur(10px)" }}>
-                                    <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: c }}>{cat}</h3>
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                                        {items.map(s => (
-                                            <span key={s} style={{
-                                                fontFamily: "'JetBrains Mono'", fontSize: 12, color: TEXT,
-                                                background: `${SURFACE2}`, padding: "6px 14px", borderRadius: 20,
-                                                border: `1px solid ${c}22`, transition: "all 0.3s",
-                                            }}>{s}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 40 }}>Hover on a domain to explore the technologies</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                        {Object.entries(SKILLS).map(([cat, items], ci) => (
+                            <SkillRow key={cat} category={cat} items={items} color={SKILL_COLORS[cat]} delay={ci * 0.12} />
+                        ))}
                     </div>
                 </Section>
 
@@ -630,7 +726,7 @@ export default function Portfolio() {
                 {/* FOOTER */}
                 <footer style={{ position: "relative", zIndex: 2, borderTop: `1px solid ${SURFACE2}`, padding: "32px 0", marginTop: 40, textAlign: "center" }}>
                     <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 13, color: TEXT_DIM }}>
-                        <GlowText style={{ fontWeight: 700 }}>{"<VR />"}</GlowText>
+                        <GlowText style={{ fontWeight: 700 }}>{"V"}</GlowText>
                         <span style={{ margin: "0 12px", opacity: 0.3 }}>|</span>
                         Built with ⚡ by Vignesh R · {new Date().getFullYear()}
                     </div>
